@@ -3,7 +3,7 @@
  * 	   File name: Program.cs
  * 	Project name: QueryBuilder
  * -------------------------------------------------------------------
- *  Author’s name and email:    Michael Ng, ngmw01@etsu.edu			
+ *  Authorâ€™s name and email:    Michael Ng, ngmw01@etsu.edu			
  *            Creation Date:	03/21/2022	
  *            Last Modified:    03/24/2022
  * -------------------------------------------------------------------
@@ -12,6 +12,9 @@
 using System.IO;
 using System.Text;
 using System.Runtime.InteropServices;
+using System.Media;
+using static System.Net.Mime.MediaTypeNames;
+using System.Text.RegularExpressions;
 
 namespace QueryBuilder
 {
@@ -38,6 +41,7 @@ namespace QueryBuilder
         public static Boolean useGUI { get; private set; } = false;
         private static QueryBuilder queryBuilder;
         static string DefaultDatabasePath = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.ToString() + Path.DirectorySeparatorChar + "Data" + Path.DirectorySeparatorChar + "Database.sqlite";
+        private static SoundPlayer player = new SoundPlayer();
 
         /// <summary>
         ///  The main entry point for the application.
@@ -48,10 +52,11 @@ namespace QueryBuilder
             //Windows users can use the GUI, but other platforms may not support the GUI.
             AskToUseGUI();
             queryBuilder = new QueryBuilder(DefaultDatabasePath);
-
+            player.SoundLocation = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.ToString() + Path.DirectorySeparatorChar + "freddyfazbear.wav";
+            player.Load();
             if (useGUI)
             {
-                Application.Run(new MainMenu());
+                System.Windows.Forms.Application.Run(new MainMenu());
             }
             else 
             {
@@ -168,7 +173,8 @@ namespace QueryBuilder
          */
         private static void launchMethod(int menuChoice)
         {
-            Console.Clear();
+            //Commented out to support Visual Studio Code's Debug Console.
+            //Console.Clear();
 
             switch (menuChoice)
             {
@@ -230,23 +236,43 @@ namespace QueryBuilder
          * Allows the program to randomly read an author.
          * 
          * Date Created: 03/24/2022
+         * Date Updated: 01/09/2024
          */
         internal static string Read() 
         {
             Random random = new Random();
+            //everything past the queryBuilder.Read looks... like a lot.
+            //We just randomly select a number from 1 to queryBuilder.ReadAll<Author>().Count().
+            String readResult = queryBuilder.Read<Author>(random.Next(queryBuilder.ReadAll<Author>().Count()) + 1).ToString();
 
             if (useGUI) 
             {
                 StringBuilder stringBuilder = new StringBuilder();
-                //everything past the queryBuilder.Read looks... like a lot.
-                //We just randomly select a number from 1 to queryBuilder.ReadAll<Author>().Count().
-                stringBuilder.Append("The program randomly selected: \n" + queryBuilder.Read<Author>(random.Next(queryBuilder.ReadAll<Author>().Count()) + 1).ToString());
+                stringBuilder.Append("The program randomly selected: \n" + readResult);
+
+                if (readResult.ToLower().Contains("fazbear"))
+                {
+                    player.Play();
+                    stringBuilder.Append("\n\nCongrats! You found the Easter Egg!\n");
+                    stringBuilder.Append("Polish: \"O cholera czy to Freddy fazbear?\"\n");
+                    stringBuilder.Append("English: \"Oh sh__, is that Freddy fazbear?\"\n");
+                    stringBuilder.Append("From: https://www.youtube.com/watch?v=BDmvkPNyA3k");
+                }
 
                 return stringBuilder.ToString();
             }
 
+            if (readResult.ToLower().Contains("fazbear"))
+            {
+                player.Play();
+                Console.WriteLine("Congrats! You found the Easter Egg!");
+                Console.WriteLine("Polish: \"O cholera czy to Freddy fazbear?\"");
+                Console.WriteLine("English: \"Oh sh__, is that Freddy fazbear?\"");
+                Console.WriteLine("From: https://www.youtube.com/watch?v=BDmvkPNyA3k");
+            }
+
             Console.WriteLine("The program randomly selected: ");
-            Console.WriteLine(queryBuilder.Read<Author>(random.Next(queryBuilder.ReadAll<Author>().Count() - 1)).ToString());
+            Console.WriteLine(readResult);
 
             //We don't need to return anything for non-GUI, so we return an empty string.
             return "";
